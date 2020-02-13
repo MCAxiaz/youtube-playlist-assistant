@@ -1,0 +1,19 @@
+{
+  "name": "youtube-playlist-assistant",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "web-ext run --source-dir ./src",
+    "build": "web-ext build --source-dir ./src --artifacts-dir ./dist"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/MCAxiaz/youtube-playlist-assistant.git"
+  },
+  "devDependencies": {
+    "eslint": "^6.8.0",
+    "eslint-config-prettier": "^6.10.0",
+    "eslint-plugin-prettier": "^3.1.2",
+    "prettier": "1.19.1",
+    "web-ext": "^4.1.0"
+  }
+}

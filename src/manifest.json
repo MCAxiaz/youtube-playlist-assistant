@@ -1,22 +1,29 @@
 {
     "manifest_version": 2,
     "name": "Youtube Playlist Assistant",
-    "version": "1.0",
+    "version": "1.0.0",
   
     "description": "Makes Youtube playlists suck less.",
+
+    "browser_specific_settings": {
+        "gecko": {
+          "id": "youtube-playlist-assistant@mcaxiaz"
+        }
+    },
   
     "content_scripts": [
         {
-            "matches": ["*://*.youtube.com/*"],
+            "matches": ["*://*.youtube.com/playlist?*"],
             "js": ["playlist.js"]
         }
     ],
 
     "background": {
-        "scripts": ["background.js"]
+        "page": "background.html"
     },
 
     "permissions": [
+        "<all_urls>",
         "storage"
     ]
 }
