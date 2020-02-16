@@ -1,4 +1,4 @@
-import Api from './YoutubeApi.js';
+import * as Api from './YoutubeApi.js';
 
 async function init() {
 	console.log('DOOT init');

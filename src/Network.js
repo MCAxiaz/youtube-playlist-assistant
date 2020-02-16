@@ -7,14 +7,14 @@ const BASE = (url, method) =>
 /**
  * GET Request.
  * @param {string} url
- * @returns {Response}
+ * @returns {Promise<Response>}
  */
 export const GET = url => BASE(url, 'GET');
 
 /**
  * POST Request.
  * @param {string} url
- * @returns {Response}
+ * @returns {Promise<Response>}
  */
 export const POST = url => BASE(url, 'POST');
 
