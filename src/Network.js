@@ -1,15 +1,17 @@
-const BASE = (url, method) =>
+const BASE = (url, method, headers) =>
 	fetch(url, {
 		method,
-		credentials: 'same-origin'
+		credentials: 'same-origin',
+		headers
 	});
 
 /**
  * GET Request.
  * @param {string} url
+ * @param {Object} headers
  * @returns {Promise<Response>}
  */
-export const GET = url => BASE(url, 'GET');
+export const GET = (url, headers) => BASE(url, 'GET', headers);
 
 /**
  * POST Request.
@@ -25,9 +27,8 @@ export const POST = url => BASE(url, 'POST');
  * @returns {string} The url with query parameters.
  */
 export const constructUrlWithQuery = (url, queries) => {
-	let urlObj = new URL(url);
+	const urlObj = new URL(url);
 	urlObj.search = new URLSearchParams(queries).toString();
-	console.log(urlObj.href);
 
 	return urlObj.href;
 };

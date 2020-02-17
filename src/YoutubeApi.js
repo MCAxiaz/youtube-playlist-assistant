@@ -4,16 +4,15 @@ import * as Model from './Model.js';
 const BASE_URL = 'https://www.youtube.com';
 const PLAYLIST_URL = `${BASE_URL}/playlist`;
 const PLAYLIST_LIST_URL = `${BASE_URL}/feed/library`;
-
-const LIST_PARAM = 'list';
+const CONTINUATION_URL = `${BASE_URL}/browse_ajax`;
 
 /**
  * Fetches all the user's playlists.
  * @returns {Promise<Model.Playlist[]>} A promise that resolves to a list of playlists.
  */
 export const fetchPlaylistList = async () => {
-	let response = await Network.GET(PLAYLIST_LIST_URL);
-	let body = await response.text();
+	const response = await Network.GET(PLAYLIST_LIST_URL);
+	const body = await response.text();
 
 	return Model.parsePlaylistList(body);
 };
@@ -24,22 +23,76 @@ export const fetchPlaylistList = async () => {
  * @returns {Promise<Model.PlaylistEntry[]>} A promise that resolves to the entries in the playlist.
  */
 export const fetchPlaylist = async playlistId => {
-	let initialSection = await fetchInitial(playlistId);
+	const responseBody = await fetchPlaylistPageBody(playlistId);
+	let { items, continuation } = Model.parseInitialPlaylistSection(responseBody);
 
-	return initialSection;
+	if (continuation) {
+		const continuationHeader = ContinuationHeader(responseBody);
+
+		while (continuation) {
+			const nextSection = await fetchPlaylistContinuation(
+				continuation,
+				continuationHeader
+			);
+
+			items = [...items, ...nextSection.items];
+			continuation = nextSection.continuation;
+		}
+	}
+
+	return items;
 };
 
 /**
- * @param {string} playlistId The playlist Id.
- * @returns {Promise<Model.PlaylistSection>} A promise that resolves to the first section in the playlist.
+ * @param {string} playlistId
+ * @returns {Promise<string>} A promise that resolves to the playlist page body in plaintext.
  */
-const fetchInitial = async playlistId => {
-	let url = Network.constructUrlWithQuery(PLAYLIST_URL, {
-		[LIST_PARAM]: playlistId
-	});
+const fetchPlaylistPageBody = async playlistId => {
+	const url = Network.constructUrlWithQuery(
+		PLAYLIST_URL,
+		ListParam(playlistId)
+	);
 
-	let response = await Network.GET(url);
-	let body = await response.text();
+	const response = await Network.GET(url);
+	return response.text();
+};
 
-	return Model.parseInitialPlaylistSection(body);
+/**
+ * @param {string} continuationId The Id for the next playlist section.
+ * @param {ContinuationHeader} continuationHeader The header used for the request.
+ * @returns {Promise<Model.PlaylistSection>} A promise that resolves to the section in the playlist.
+ */
+const fetchPlaylistContinuation = async (
+	continuationId,
+	continuationHeader
+) => {
+	const url = Network.constructUrlWithQuery(
+		CONTINUATION_URL,
+		ContinuationParam(continuationId)
+	);
+
+	const response = await Network.GET(url, continuationHeader);
+	const responseBody = await response.json();
+
+	return Model.parseContinuationSection(responseBody);
+};
+
+const ListParam = playlistId => ({
+	list: playlistId
+});
+
+const ContinuationParam = continuationId => ({
+	ctoken: continuationId,
+	continuation: continuationId
+});
+
+const ContinuationHeader = responseBody => {
+	const clientInfo = Model.parseClientInfo(responseBody);
+	const idToken = Model.parseIdToken(responseBody);
+
+	return {
+		'X-Youtube-Client-Name': clientInfo.name,
+		'X-Youtube-Client-Version': clientInfo.version,
+		'X-Youtube-Identity-Token': idToken
+	};
 };

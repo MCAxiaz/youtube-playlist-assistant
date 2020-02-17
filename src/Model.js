@@ -4,13 +4,13 @@
  * @returns {Playlist[]} Array of playlists
  */
 export const parsePlaylistList = responseBody => {
-	let playlists = parseInitialData(responseBody)[2].itemSectionRenderer
+	const playlists = parseInitialData(responseBody)[2].itemSectionRenderer
 		.contents[0].shelfRenderer.content.gridRenderer.items;
 
 	return playlists.map(item => {
-		let actualItem = item.gridPlaylistRenderer;
-		let id = actualItem.playlistId;
-		let title = actualItem.title.runs[0].text;
+		const actualItem = item.gridPlaylistRenderer;
+		const id = actualItem.playlistId;
+		const title = actualItem.title.runs[0].text;
 
 		return new Playlist(id, title);
 	});
@@ -22,45 +22,87 @@ export const parsePlaylistList = responseBody => {
  * @returns {PlaylistSection} The first section of the playlist.
  */
 export const parseInitialPlaylistSection = responseBody => {
-	let initialData = parseInitialData(responseBody)[0].itemSectionRenderer
+	const initialData = parseInitialData(responseBody)[0].itemSectionRenderer
 		.contents[0].playlistVideoListRenderer;
 
-	let initialResults = parseInitialPlaylistResults(initialData);
-	let initialContinuation = parseInitialContinuation(initialData);
+	const initialEntries = parsePlaylistEntries(initialData);
+	const initialContinuation = parseContinuation(initialData);
 
-	return new PlaylistSection(initialResults, initialContinuation);
+	return new PlaylistSection(initialEntries, initialContinuation);
+};
+
+/**
+ * Parses the given section of a playlist.
+ * @param {Object} responseBody The response body in JSON.
+ * @returns {PlaylistSection} The section of the playlist.
+ */
+export const parseContinuationSection = responseBody => {
+	const continuationData =
+		responseBody[1].response.continuationContents.playlistVideoListContinuation;
+
+	const entries = parsePlaylistEntries(continuationData);
+	const continuation = parseContinuation(continuationData);
+
+	return new PlaylistSection(entries, continuation);
+};
+
+const idTokenRegex = /"ID_TOKEN":"([^"]*)",/;
+/**
+ * parses the identity token for use in request headers.
+ * @param {string} responseBody The response body in plaintext.
+ * @returns {string} The ID Token.
+ */
+export const parseIdToken = responseBody => {
+	return responseBody.match(idTokenRegex)[1];
+};
+
+/**
+ * Parses the client info for use in request headers.
+ * @param {string} responseBody The response body in plaintext.
+ * @returns {ClientInfo}
+ */
+export const parseClientInfo = responseBody => {
+	const clientInfoArray = parseInitialDataObject(responseBody).responseContext
+		.serviceTrackingParams[2].params;
+
+	const clientVersion = clientInfoArray[2].value;
+	const clientName = clientInfoArray[3].value;
+
+	return new ClientInfo(clientName, clientVersion);
 };
 
 const initialDataRegex = /window\["ytInitialData"\] = (\{.*\});/;
-const parseInitialData = responseBody => {
-	let initialData = responseBody.match(initialDataRegex);
+const parseInitialDataObject = responseBody => {
+	const initialData = responseBody.match(initialDataRegex);
 
-	initialData = JSON.parse(initialData[1]).contents
-		.twoColumnBrowseResultsRenderer.tabs[0].tabRenderer.content
-		.sectionListRenderer.contents;
-
-	return initialData;
+	return JSON.parse(initialData[1]);
 };
 
-const parseInitialPlaylistResults = initialData => {
-	let playlistContent = initialData.contents;
+const parseInitialData = responseBody => {
+	return parseInitialDataObject(responseBody).contents
+		.twoColumnBrowseResultsRenderer.tabs[0].tabRenderer.content
+		.sectionListRenderer.contents;
+};
+
+const parsePlaylistEntries = data => {
+	const playlistContent = data.contents;
 
 	return playlistContent.map(item => {
-		let actualItem = item.playlistVideoRenderer;
-		let id = actualItem.videoId;
-		let title = actualItem.title.simpleText;
+		const actualItem = item.playlistVideoRenderer;
+		const id = actualItem.videoId;
+		const title = actualItem.title.simpleText;
 
 		return new PlaylistEntry(id, title);
 	});
 };
 
-const parseInitialContinuation = initialData => {
-	let continuations = initialData.continuations;
+const parseContinuation = data => {
+	const continuations = data.continuations;
 	return continuations && continuations[0].nextContinuationData.continuation;
 };
 
 /** Class representing a playlist. */
-class Playlist {
+export class Playlist {
 	/**
 	 * @param {string} id
 	 * @param {string} title
@@ -72,7 +114,7 @@ class Playlist {
 }
 
 /** Class representing one section of a paged playlist. */
-class PlaylistSection {
+export class PlaylistSection {
 	/**
 	 * @param {PlaylistEntry[]} items List of entries in the section.
 	 * @param {string} continuation Id of the next playlist section if it exists.
@@ -84,7 +126,7 @@ class PlaylistSection {
 }
 
 /** Class representing a playlist entry. */
-class PlaylistEntry {
+export class PlaylistEntry {
 	/**
 	 * @param {string} id
 	 * @param {string} title
@@ -92,5 +134,17 @@ class PlaylistEntry {
 	constructor(id, title) {
 		this.id = id;
 		this.title = title;
+	}
+}
+
+/** Class representing the client info to be used in request headers. */
+export class ClientInfo {
+	/**
+	 * @param {string} name
+	 * @param {string} version
+	 */
+	constructor(name, version) {
+		this.name = name;
+		this.version = version;
 	}
 }

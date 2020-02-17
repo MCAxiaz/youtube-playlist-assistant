@@ -8,11 +8,13 @@ async function init() {
 	});
 	console.log('DOOT finished setting storage');
 
+	//fetch Storage
+
 	let playlists = await Api.fetchPlaylistList();
 	console.log(playlists);
 
 	let response = await Api.fetchPlaylist('PLOnEr1yfSfP4N3kGycfychr8OFWTepzT_');
-	console.log(`DOOT ${response}`);
+	console.log(response);
 }
 
 init().then(() => {
