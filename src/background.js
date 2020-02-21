@@ -1,10 +1,11 @@
 import * as Storage from './Storage.js';
 import * as Api from './YoutubeApi.js';
+import * as Downloads from './Downloads.js';
 
 // eslint-disable-next-line no-unused-vars
 import { PlaylistEntry } from './Model.js';
 
-async function init() {
+async function sync() {
 	console.log('DOOT init');
 	let savedPlaylistEntries = await Storage.getPlaylistEntries();
 
@@ -20,10 +21,7 @@ async function init() {
 	 */
 	let unavailablePlaylistEntries = new Map();
 
-	/**
-	 * @type {Map<string, string>}
-	 */
-	const newPlaylistEntries = new Map();
+	const newPlaylistEntries = {};
 
 	for (const playlist of playlists) {
 		const entries = await Api.fetchPlaylist(playlist.id);
@@ -33,11 +31,11 @@ async function init() {
 			const available = !!entry.title;
 
 			if (available) {
-				newPlaylistEntries.set(id, entry.title);
+				newPlaylistEntries[id] = entry.title;
 			} else {
-				const savedTitle = savedPlaylistEntries.get(entry.id);
+				const savedTitle = savedPlaylistEntries[entry.id];
 				if (savedTitle) {
-					newPlaylistEntries.set(id, savedTitle);
+					newPlaylistEntries[id] = savedTitle;
 				}
 			}
 
@@ -54,8 +52,17 @@ async function init() {
 	console.log(newPlaylistEntries);
 
 	await Storage.setPlaylistEntries(newPlaylistEntries);
+	await createBackup(newPlaylistEntries);
 }
 
-init().then(() => {
+const createBackup = async playlistEntries => {
+	const fileName = Downloads.generateBackupFileName();
+	console.log(`downloading ${fileName}`);
+
+	let success = await Downloads.download(playlistEntries, fileName);
+	console.log(`download succeeded: ${success}`);
+};
+
+sync().then(() => {
 	console.log('DOOT done init');
 });
