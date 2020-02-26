@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "scripts": {
     "start": "web-ext run --source-dir ./src",
-    "build": "web-ext build --source-dir ./src --artifacts-dir ./dist"
+    "build": "web-ext build --overwrite-dest --source-dir ./src --artifacts-dir ./dist"
   },
   "repository": {
     "type": "git",

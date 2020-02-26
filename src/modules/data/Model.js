@@ -52,9 +52,7 @@ const idTokenRegex = /"ID_TOKEN":"([^"]*)",/;
  * @param {string} responseBody The response body in plaintext.
  * @returns {string} The ID Token.
  */
-export const parseIdToken = responseBody => {
-	return responseBody.match(idTokenRegex)[1];
-};
+export const parseIdToken = responseBody => responseBody.match(idTokenRegex)[1];
 
 /**
  * Parses the client info for use in request headers.

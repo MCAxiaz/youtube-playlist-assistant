@@ -10,6 +10,12 @@
           "id": "youtube-playlist-assistant@mcaxiaz"
         }
     },
+
+    "browser_action": {
+        "browser_style": true,
+        "default_title": "Youtube Playlist Assisant",
+        "default_popup": "popup/popup.html"
+    },
   
     "content_scripts": [
         {
@@ -19,11 +25,12 @@
     ],
 
     "background": {
-        "page": "background.html"
+        "page": "background/background.html"
     },
 
     "permissions": [
-        "<all_urls>",
+        "https://youtube.com/*",
+        "https://www.youtube.com/*",
         "storage",
         "downloads"
     ]
