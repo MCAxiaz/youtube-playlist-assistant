@@ -48,7 +48,6 @@ let autoSyncTimer = 0;
 const scheduleAutoSync = delayMs => {
 	if (autoSyncTimer) {
 		clearTimeout(autoSyncTimer);
-		autoSyncTimer = 0;
 	}
 	autoSyncTimer = setTimeout(checkAutoSync, delayMs);
 };
