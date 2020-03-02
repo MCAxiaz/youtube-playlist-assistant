@@ -7,24 +7,24 @@ const BASE = (url, method, headers) =>
 
 /**
  * GET Request.
- * @param {string} url
- * @param {Object} headers
+ * @param {String} url
+ * @param {Object} [headers]
  * @returns {Promise<Response>}
  */
 export const GET = (url, headers) => BASE(url, 'GET', headers);
 
 /**
  * POST Request.
- * @param {string} url
+ * @param {String} url
  * @returns {Promise<Response>}
  */
 export const POST = url => BASE(url, 'POST');
 
 /**
  * Appends a url with the given query parameters.
- * @param {string} url
+ * @param {String} url
  * @param {Object} queries
- * @returns {string} The url with query parameters.
+ * @returns {String} The url with query parameters.
  */
 export const constructUrlWithQuery = (url, queries) => {
 	const urlObj = new URL(url);

@@ -1,8 +1,10 @@
 const runtime = browser.runtime;
 
 /**
- * @param {function} listener
- * @param {string} [tag] Only respond to messages with the given tag.
+ * Adds a listener to the Messaging API. The listener is passed the message, or message body if tag is specified.
+ * The listener should return a promise that resolves to the response, or omit return to ignore the message.
+ * @param {(message: Any) => Promise} listener
+ * @param {String} [tag] Only respond to messages with the given tag.
  */
 export const addListener = (listener, tag) => {
 	if (!tag) {
@@ -25,10 +27,12 @@ export const addListener = (listener, tag) => {
  */
 export const sendMessage = message => runtime.sendMessage(message);
 
+/**
+ * Class representing a message. All messages with the same tag are expected to have consistent body structure.
+ */
 export class Message {
 	/**
-	 *
-	 * @param {string} tag
+	 * @param {String} tag
 	 * @param {*} [body]
 	 */
 	constructor(tag, body) {
@@ -37,8 +41,11 @@ export class Message {
 	}
 }
 
+/**
+ * Enum for identifying differentiating sender/receiver
+ * @enum {String}
+ */
 export const TAG = {
-	/** request */
 	REQUEST_LIST: 'REQUEST_LIST',
 	SYNC_COMPLETE: 'SYNC_COMPLETE'
 };

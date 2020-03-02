@@ -19,11 +19,18 @@ export const fetchPlaylistList = async () => {
 
 /**
  * Fetches all entries in a playlist.
- * @param {string} playlistId The playlist Id.
+ * @param {String} playlistId The playlist Id.
  * @returns {Promise<Model.PlaylistEntry[]>} A promise that resolves to the entries in the playlist.
  */
 export const fetchPlaylist = async playlistId => {
-	const responseBody = await fetchPlaylistPageBody(playlistId);
+	const url = Network.constructUrlWithQuery(
+		PLAYLIST_URL,
+		ListParam(playlistId)
+	);
+
+	const response = await Network.GET(url);
+	const responseBody = await response.text();
+
 	let { items, continuation } = Model.parseInitialPlaylistSection(responseBody);
 
 	if (continuation) {
@@ -35,7 +42,7 @@ export const fetchPlaylist = async playlistId => {
 				continuationHeader
 			);
 
-			items = [...items, ...nextSection.items];
+			items = items.concat(nextSection.items);
 			continuation = nextSection.continuation;
 		}
 	}
@@ -44,22 +51,8 @@ export const fetchPlaylist = async playlistId => {
 };
 
 /**
- * @param {string} playlistId
- * @returns {Promise<string>} A promise that resolves to the playlist page body in plaintext.
- */
-const fetchPlaylistPageBody = async playlistId => {
-	const url = Network.constructUrlWithQuery(
-		PLAYLIST_URL,
-		ListParam(playlistId)
-	);
-
-	const response = await Network.GET(url);
-	return response.text();
-};
-
-/**
- * @param {string} continuationId The Id for the next playlist section.
- * @param {ContinuationHeader} continuationHeader The header used for the request.
+ * @param {String} continuationId The Id for the next playlist section.
+ * @param {Object} continuationHeader The header used for the request.
  * @returns {Promise<Model.PlaylistSection>} A promise that resolves to the section in the playlist.
  */
 const fetchPlaylistContinuation = async (

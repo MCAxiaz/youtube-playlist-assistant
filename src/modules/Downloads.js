@@ -1,54 +1,65 @@
 import { delay } from './Utils.js';
 
 const downloads = browser.downloads;
+const OVERWRITE = downloads.FilenameConflictAction.OVERWRITE;
+const UNIQUIFY = downloads.FilenameConflictAction.UNIQUIFY;
 
 /**
- *
- * @param {Object} data A data object that can be placed in a blob.
- * @returns {string} The URL referencing the data object.
+ * @param {Object} data The data object to be placed in a blob.
+ * @param {String} mimeType
+ * @returns {Blob} The created blob.
  */
-const createBackupFileUrl = data => {
-	const blob = new Blob([JSON.stringify(data, null, '\t')], {
-		type: 'application/json'
-	});
-
-	return URL.createObjectURL(blob);
+export const createBlob = (data, mimeType) => {
+	switch (mimeType) {
+		case 'application/json':
+			return new Blob([JSON.stringify(data, null, '\t')], {
+				type: mimeType
+			});
+		default:
+			return new Blob([data], {
+				type: mimeType
+			});
+	}
 };
 
 /**
- * @return {string} Generated file name.
+ * @returns {String} Generated file name.
  */
 export const generateBackupFileName = () => {
 	const date = new Date();
 	const year = date.getFullYear();
 	const month = prefixNum(date.getMonth() + 1);
 	const day = prefixNum(date.getDate());
+
 	return `youtube-playlist-assistant/playlist-archive-${year}-${month}-${day}.json`;
 };
 
+/**
+ * @param {Blob} dataBlob
+ * @param {String} filename
+ * @param {Boolean} [saveAs] Whether to show the "Save As" dialog. Default false.
+ * @param {Boolean} [overwrite] Whether to overrite existing file. Default true.
+ * @returns {Promise<Boolean>} Promise that resolves to whether the download succeeded or not.
+ */
 export const download = async (
-	data,
+	dataBlob,
 	filename,
 	saveAs = false,
 	overwrite = true
 ) => {
-	const url = createBackupFileUrl(data);
+	const url = URL.createObjectURL(dataBlob);
 
 	try {
 		const id = await downloads.download({
 			url,
 			filename,
 			saveAs,
-			conflictAction: overwrite
-				? downloads.FilenameConflictAction.OVERWRITE
-				: downloads.FilenameConflictAction.UNIQUIFY
+			conflictAction: overwrite ? OVERWRITE : UNIQUIFY
 		});
 
 		const success = await waitDownload(id);
 		await downloads.erase({ id });
 		return success;
-	} catch (error) {
-		console.error(error);
 	} finally {
 		URL.revokeObjectURL(url);
 	}
@@ -56,8 +67,8 @@ export const download = async (
 
 /**
  * Prefixes the given date or month number with 0 if necessary to maintain length of two.
- * @param {number} num Day or month number.
- * @returns {string}
+ * @param {Number} num Day or month number.
+ * @returns {String}
  */
 const prefixNum = num => {
 	const prefixed = `0${num}`;
@@ -66,9 +77,9 @@ const prefixNum = num => {
 };
 
 /**
- *
- * @param {number} id The ID of the download to wait for.
- * @returns Whether the download succeeded or not.
+ * Waits for the download up to a set amount of time, cancelling it if it times out.
+ * @param {Number} id The ID of the download to wait for.
+ * @returns {Promise<Boolean>} Promise that resolves to whether the download succeeded or not.
  */
 const waitDownload = async id => {
 	for (let i = 0; i < 5; ++i) {
