@@ -32,12 +32,12 @@ const checkAutoSync = async () => {
 
 	if (!timeTillNextSync) {
 		try {
+			await Storage.setLastAutoSyncDate(Date.now());
 			await sync();
 		} catch (error) {
 			console.error(error);
 		} finally {
 			scheduleAutoSync(SYNC_INTERVAL);
-			await Storage.setLastAutoSyncDate(Date.now());
 		}
 	} else {
 		scheduleAutoSync(timeTillNextSync);
