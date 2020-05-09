@@ -10,7 +10,7 @@ export const parsePlaylistList = responseBody => {
 	return playlists.map(item => {
 		const actualItem = item.gridPlaylistRenderer;
 		const id = actualItem.playlistId;
-		const title = actualItem.title.runs[0].text;
+		const title = actualItem.title.simpleText;
 
 		return new Playlist(id, title);
 	});
