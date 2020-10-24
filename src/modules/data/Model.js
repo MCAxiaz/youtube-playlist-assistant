@@ -25,6 +25,9 @@ export const parseInitialPlaylistSection = responseBody => {
 	const initialData = parseInitialData(responseBody)[0].itemSectionRenderer
 		.contents[0].playlistVideoListRenderer;
 
+	// empty playlist
+	if (!initialData) return new PlaylistSection([], null);
+
 	const entriesArray = initialData.contents;
 	let initialEntries = [];
 	if (entriesArray) {
@@ -64,6 +67,8 @@ const idTokenRegex = /"ID_TOKEN":"([^"]*)"/;
  */
 export const parseIdToken = responseBody => responseBody.match(idTokenRegex)[1];
 
+const CLIENT_VERSION_KEY = 'cver';
+const CLIENT_NAME_KEY = 'yt_li';
 /**
  * Parses the client info for use in request headers.
  * @param {String} responseBody The response body in plaintext.
@@ -73,8 +78,12 @@ export const parseClientInfo = responseBody => {
 	const clientInfoArray = parseInitialDataObject(responseBody).responseContext
 		.serviceTrackingParams[2].params;
 
-	const clientVersion = clientInfoArray[2].value;
-	const clientName = clientInfoArray[3].value;
+	const clientVersion = clientInfoArray.find(
+		element => element.key == CLIENT_VERSION_KEY
+	).value;
+	const clientName = clientInfoArray.find(
+		element => element.key == CLIENT_NAME_KEY
+	).value;
 
 	return new ClientInfo(clientName, clientVersion);
 };
@@ -95,7 +104,7 @@ const parseInitialData = responseBody => {
 const parsePlaylistEntry = playlistEntry => {
 	const actualItem = playlistEntry.playlistVideoRenderer;
 	const id = actualItem.videoId;
-	const title = actualItem.title.simpleText;
+	const title = actualItem.title.runs[0].text;
 
 	return new PlaylistEntry(id, title);
 };
